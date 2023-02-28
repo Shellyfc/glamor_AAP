@@ -6,15 +6,19 @@
         "D": {
             "rot": {
                 "emails": [
-                    "shellyfc625@gmail.com",
-                    "chufang@usc.edu",
                     "NO_LOG_IN"
                 ],
-                "vote": 3
+                "vote": 1
             },
             "dead": {
                 "emails": [
                     "shellyfc625@gmail.com"
+                ],
+                "vote": 1
+            },
+            "rotten": {
+                "emails": [
+                    "NO_LOG_IN"
                 ],
                 "vote": 1
             }
@@ -27,10 +31,61 @@
         "D": {
             "queen": {
                 "emails": [
-                    "NO_LOG_IN",
-                    "chufang@usc.edu"
+                    "NO_LOG_IN"
                 ],
-                "vote": 2
+                "vote": 1
+            }
+        }
+    },
+    {
+        "A": "sky",
+        "B": "blue",
+        "C": "grass",
+        "D": {
+            "green": {
+                "emails": [
+                    "NO_LOG_IN"
+                ],
+                "vote": 1
+            }
+        }
+    },
+    {
+        "A": "run",
+        "B": "fast",
+        "C": "walk",
+        "D": {
+            "slow": {
+                "emails": [
+                    "NO_LOG_IN"
+                ],
+                "vote": 1
+            }
+        }
+    },
+    {
+        "A": "brick",
+        "B": "hammer",
+        "C": "coin",
+        "D": {
+            "screwdriver": {
+                "emails": [
+                    "NO_LOG_IN"
+                ],
+                "vote": 1
+            }
+        }
+    },
+    {
+        "A": "glass",
+        "B": "shatter",
+        "C": "rubber",
+        "D": {
+            "bounce": {
+                "emails": [
+                    "NO_LOG_IN"
+                ],
+                "vote": 1
             }
         }
     }
