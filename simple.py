@@ -1,4 +1,5 @@
 import os
+import random
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 import torch
@@ -9,7 +10,9 @@ import gensim
 from transformers import logging
 import json
 from datetime import datetime
-from random import sample
+from random import sample, choices
+from deprecated import deprecated
+from filelock import Timeout, FileLock
 
 logging.set_verbosity_error()
 
@@ -27,6 +30,72 @@ app = Flask(__name__)
 CORS(app)
 
 
+# user start
+@app.put('/user')
+def updUserInfo():
+    pass
+
+
+# user end
+
+# question start
+def combineBandD():
+    allQuestions = []
+    with open("userDataB.json", 'r') as file:
+        allQuestions.extend(json.load(file))
+    with open("userDataD.json", 'r') as file:
+        allQuestions.extend(json.load(file))
+    return allQuestions
+
+
+@app.post('/question')
+@cross_origin()
+def getQuestions():
+    resVal = []
+    sentence = "{A} is to {B} as {C} is to {D}."
+    rawQuestions = getRawQuestions()
+    ans = {}
+    num = request.get_json(silent=True).get("num")
+    for i, q in enumerate(rawQuestions):
+        if isinstance(q["B"], str):
+            # answer in D
+            ans = q["D"]
+            resVal.append(
+                {"index": i, "question": sentence.format(A=q["A"], B=q["B"], C=q["C"], D="______"), "answer": q["D"],
+                 "userAnswer": ""})
+        elif isinstance(q["D"], str):
+            # answer in B
+            ans = q["B"]
+            resVal.append(
+                {"index": i, "question": sentence.format(A=q["A"], B="______", C=q["C"], D=q["D"]), "answer": q["B"],
+                 "userAnswer": ""})
+        ansWithScore = calculateScore(ans)
+    return random.sample(resVal, k=num)
+
+
+@app.get('/rawQuestion')
+def getRawQuestions():
+    questions = combineBandD()
+    args = request.args
+    num = args.get("num", default=len(questions), type=int)
+    return random.choices(questions, k=num)
+
+
+@app.get('/calculateScore')
+def calculateScore(answers):
+    resVal = {}
+    totalVote = 0
+    for ans, info in answers.items():
+        totalVote += info["vote"]
+    for ans, info in answers.items():
+        resVal.append({ans: info["vote"] / totalVote})
+    return resVal
+
+
+# question end
+
+
+# search start
 @app.route('/')
 def index():
     return render_template('fourBlanks.html')
@@ -44,8 +113,6 @@ def search():
 
 @app.post('/search2')
 def search2():
-    data = request.get_json(silent=True)
-    result = {}
     content = request.get_json(force=True)
     print(content)
     sentence = "{A} is to {B} as {C} is to {D}."
@@ -54,6 +121,7 @@ def search2():
 
 
 @app.post('/examples')
+@cross_origin()
 def examples():
     num = request.get_json(silent=True).get("num")
     with open('userData.json', 'r') as openfile:
@@ -63,6 +131,7 @@ def examples():
 
 
 @app.post('/answer')
+@cross_origin()
 def answer():
     content = request.get_json(silent=True)
     ans = content.get("answer")
@@ -102,16 +171,36 @@ def searchLocalJson(formA, formB, formC, formD):
         # Reading from json file
         items = json.load(openfile)
         for item in items:
-            if item['A'] == formA and item['C'] == formC and item['D'] == formD:
+            if item['A'] == formA and item['B'] == formB and item['C'] == formC and item['D'] == formD:
                 # item found, return item['Data']
                 res['B'] = item['Data']
     with open('resultD.json', 'r') as openfile:
         # Reading from json file
         items = json.load(openfile)
         for item in items:
-            if item['A'] == formA and item['C'] == formC and item['B'] == formB:
+            if item['A'] == formA and item['B'] == formB and item['C'] == formC and item['D'] == formD:
                 # item found, return item['Data']
                 res['D'] = item['Data']
+    print(res)
+    return res
+
+
+def searchSavedUserData(formA, formB, formC, formD):
+    res = {'B': [], 'D': []}
+    with open('userDataB.json', 'r') as openfile:
+        # Reading from json file
+        items = json.load(openfile)
+        for item in items:
+            if item['A'] == formA and item['C'] == formC and item['D'] == formD:
+                # item found, return item['Data']
+                res['B'] = item['B']
+    with open('userDataD.json', 'r') as openfile:
+        # Reading from json file
+        items = json.load(openfile)
+        for item in items:
+            if item['A'] == formA and item['C'] == formC and item['B'] == formB:
+                # item found, return item['Data']
+                res['D'] = item['D']
     print(res)
     return res
 
@@ -121,7 +210,7 @@ def saveLocalJson(formA, formB, formC, formD, result):
         # First we load existing data into a dict.
         file_data = json.load(file)
         # Join new_data with file_data inside emp_details
-        file_data.append({"A": formA, "C": formC, "D": formD, "Data": result["B"]})
+        file_data.append({"A": formA, "B": formB, "C": formC, "D": formD, "Data": result["B"]})
         # Sets file's current position at offset.
         file.seek(0)
         # convert back to json.
@@ -130,7 +219,7 @@ def saveLocalJson(formA, formB, formC, formD, result):
         # First we load existing data into a dict.
         file_data = json.load(file)
         # Join new_data with file_data inside emp_details
-        file_data.append({"A": formA, "B": formB, "C": formC, "Data": result["D"]})
+        file_data.append({"A": formA, "B": formB, "C": formC, "D": formD, "Data": result["D"]})
         # Sets file's current position at offset.
         file.seek(0)
         # convert back to json.
@@ -162,69 +251,74 @@ def saveUserDate(email, formA, formB, formC, formD):
 
 # when user input a ABCD, save B and D separately.
 def saveUserDataForBAndD(email, formA, formB, formC, formD):
+    lockB = FileLock("userDataB.json.lock", timeout=10)
+    lockD = FileLock("userDataD.json.lock", timeout=10)
     if not email or email == '':
         email = 'NO_LOG_IN'
-    with open("userDataB.json", 'r+') as file:
-        items = json.load(file)
-        stop = False
-        for item in items:
-            if stop:
-                break
-            # if ABC exists
-            if item['A'] == formA and item['C'] == formC and item['D'] == formD:
-                # item found
-                for answer, anwerInfo in item['B'].items():
-                    if answer == formB:
-                        if email not in anwerInfo['emails']:
-                            anwerInfo['vote'] += 1
-                            anwerInfo['emails'].append(email)
-                            # json.dump(item, file, indent=4)
-                            stop = True
-                        break
-                # ABC exits, but formB does not exist in item['B']
-                if not stop:
-                    item['B'][formB] = {'emails': [email], 'vote': 1}
-                stop = True
-                break
-        # matching ABC not found, add new item
-        if not stop:
-            items.append({"A": formA, "C": formC, "D": formD, "B": {formB: {'emails': [email], 'vote': 1}}})
-            # file.seek(0)
-            # # convert back to json.
-            # json.dump(items, file, indent=4)
-        file.seek(0)
-        json.dump(items, file, indent=4)
+    with lockB:
+        with open("userDataB.json", 'r+') as file:
+            items = json.load(file)
+            stop = False
+            for item in items:
+                if stop:
+                    break
+                # if ABC exists
+                if item['A'] == formA and item['C'] == formC and item['D'] == formD:
+                    # item found
+                    for answer, anwerInfo in item['B'].items():
+                        if answer == formB:
+                            if email not in anwerInfo['emails']:
+                                anwerInfo['vote'] += 1
+                                anwerInfo['emails'].append(email)
+                                # json.dump(item, file, indent=4)
+                                stop = True
+                            break
+                    # ABC exits, but formB does not exist in item['B']
+                    if not stop:
+                        item['B'][formB] = {'emails': [email], 'vote': 1}
+                    stop = True
+                    break
+            # matching ABC not found, add new item
+            if not stop:
+                items.append({"A": formA, "C": formC, "D": formD, "B": {formB: {'emails': [email], 'vote': 1}}})
+                # file.seek(0)
+                # # convert back to json.
+                # json.dump(items, file, indent=4)
+            file.seek(0)
+            json.dump(items, file, indent=4)
 
-    with open("userDataD.json", 'r+') as file:
-        items = json.load(file)
-        stop = False
-        for item in items:
-            if stop:
-                break
-            # if ABC exists
-            if item['A'] == formA and item['B'] == formB and item['C'] == formC:
-                # item found
-                for answer, anwerInfo in item['D'].items():
-                    if answer == formD:
-                        if email not in anwerInfo['emails']:
-                            anwerInfo['vote'] += 1
-                            anwerInfo['emails'].append(email)
-                            # json.dump(item, file, indent=4)
-                            stop = True
-                        break
-                # ABC exits, but formD does not exist in item['D']
-                if not stop:
-                    item['D'][formD] = {'emails': [email], 'vote': 1}
-                stop = True
-                break
-        # matching ABC not found, add new item
-        if not stop:
-            items.append({"A": formA, "B": formB, "C": formC, "D": {formD: {'emails': [email], 'vote': 1}}})
-            # file.seek(0)
-            # convert back to json.
-            # json.dump(items, file, indent=4)
-        file.seek(0)
-        json.dump(items, file, indent=4)
+    with lockD:
+        with open("userDataD.json", 'r+') as file:
+            items = json.load(file)
+            stop = False
+            for item in items:
+                if stop:
+                    break
+                # if ABC exists
+                if item['A'] == formA and item['B'] == formB and item['C'] == formC:
+                    # item found
+                    for answer, anwerInfo in item['D'].items():
+                        if answer == formD:
+                            if email not in anwerInfo['emails']:
+                                anwerInfo['vote'] += 1
+                                anwerInfo['emails'].append(email)
+                                # json.dump(item, file, indent=4)
+                                stop = True
+                            break
+                    # ABC exits, but formD does not exist in item['D']
+                    if not stop:
+                        item['D'][formD] = {'emails': [email], 'vote': 1}
+                    stop = True
+                    break
+            # matching ABC not found, add new item
+            if not stop:
+                items.append({"A": formA, "B": formB, "C": formC, "D": {formD: {'emails': [email], 'vote': 1}}})
+                # file.seek(0)
+                # convert back to json.
+                # json.dump(items, file, indent=4)
+            file.seek(0)
+            json.dump(items, file, indent=4)
+
 
 @cross_origin()
 def fillMaskWithModels(content, sentence, models):
@@ -323,4 +417,4 @@ def gensimWord2Vec(formA, formB, formC, formD):
 
 if __name__ == '__main__':
     printConfig()
-    app.run(port=8888)
+    app.run(host='0.0.0.0', port=8888)
