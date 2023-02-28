@@ -1,43 +1,89 @@
+<template>
+	<main class="app">
+		<h1>The Quiz</h1>
+
+		<section class="quiz" v-if="!quizCompleted">
+			<div class="quiz-info">
+				<span class="question">{{ questionIdx + 1 }}. {{ getCurrentQuestion.question }}</span>
+				<span class="score">Score {{ score }}/{{ questions.length }}</span>
+			</div>
+
+			<div class="input_answer">
+				<q-input outlined v-model="answer" />
+			</div>
+			<button @click="NextQuestion" :disabled="!answer">
+				{{
+					getCurrentQuestion.index == questions.length - 1
+					? 'Finish'
+					: answer
+						? 'Submit'
+						: 'Next question'
+				}}
+			</button>
+		</section>
+
+		<section v-else>
+			<h2>You have finished the quiz!</h2>
+			<p>Your score is {{ score }}/{{ questions.length }}</p>
+			<!-- <li v-for="(question, index) in questions" :key="index">
+				Question: {{ question.question }}
+				Your Answer: {{ question.userAnswer }}
+				Others' Answers: {{ question.topAnswer }}
+			</li> -->
+			<!-- <div class="q-pa-md">
+				<q-carousel v-model="questionIdx" transition-prev="slide-right" transition-next="slide-left" animated
+					control-color="teal" class="rounded-borders">
+					<q-carousel-slide v-for="(question, index) in questions" :key="index" name="index"
+						class="column no-wrap flex-center">
+						<div class="q-mt-md text-center">
+							Question: {{ question.question }}
+							Your Answer: {{ question.userAnswer }}
+							Others' Answers: {{ question.topAnswer }}
+						</div>
+					</q-carousel-slide>
+				</q-carousel>
+
+				<div class="row justify-center">
+					<q-btn-toggle glossy v-model="questionIdx" :options="options" />
+				</div>
+			</div> -->
+			<div>
+				Question: {{ questions[page - 1].question }}
+				Your Answer: {{ questions[page - 1].userAnswer }}
+				<li v-for="(ta, index) in questions[page - 1].topAnswer" :key="index">
+					{{ ta[3] }} Vote: {{ ta[5] }}
+				</li>
+			</div>
+			<div class="q-pa-lg flex flex-center">
+				<q-pagination v-model="page" :max="questions.length" direction-links push color="teal" active-design="push"
+					active-color="orange" />
+			</div>
+		</section>
+	</main>
+</template>
+
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeMount } from 'vue'
+import axios from 'axios'
+import { getAuth } from "firebase/auth";
+// import { get } from 'http';
 const answer = ref('')
-const questions = ref([
-  {
-	question: 'Man is to King as Woman is to _____?',
-	answer: 'Queen',
-	options: [
-		'A framework',
-		'A library',
-		'A type of hat'
-	],
-	selected: null,
-    userAnswer: ''
-  },
-  {
-	question: 'What is Vuex used for?',
-	answer: 2,
-	options: [
-		'Eating a delicious snack',
-		'Viewing things',
-		'State management'
-	],
-	selected: null,
-    userAnswer: ''
-  },
-  {
-	question: 'What is Vue Router?',
-	answer: 1,
-	options: [
-		'An ice cream maker',
-		'A routing library for Vue',
-		'Burger sauce'
-	],
-	selected: null,
-    userAnswer: ''
-  }
-])
+const url = ref('http://192.168.1.23')
+// const url = ref('http://10.26.27.216')
+// const url = ref('http://10.25.226.91')
+// const url = ref('http://127.0.0.1')
+const questions = ref(null)
 const quizCompleted = ref(false)
-const currentQuestion = ref(0)
+const questionIdx = ref(0)
+const email = ref(null)
+const page = ref(1)
+getAuth().onAuthStateChanged(function (user) {
+	if (user) {
+		email.value = user.email
+	} else {
+		email.value = ""
+	}
+})
 const score = computed(() => {
 	let value = 0
 	questions.value.map(q => {
@@ -48,9 +94,34 @@ const score = computed(() => {
 	})
 	return value
 })
+
+
+function getQuestions() {
+	let axiosConfig = {
+		headers: {
+			'Content-Type': 'application/json;charset=UTF-8',
+			"Access-Control-Allow-Origin": "*",
+		}
+	};
+	axios.post(url.value + ":8888/play/questions", {
+		num: 5
+	}, axiosConfig)
+		.then(function (response) {
+			questions.value = response.data
+		})
+		.catch(function (error) {
+			console.log(error);
+		});
+}
+
+onBeforeMount(() => {
+	getQuestions()
+})
+
 const getCurrentQuestion = computed(() => {
-	let question = questions.value[currentQuestion.value]
-	question.index = currentQuestion.value
+	let question = questions.value[questionIdx.value]
+	console.log(questions.value)
+	question.index = questionIdx.value
 	return question
 })
 // const SetAnswer = (e) => {
@@ -62,83 +133,33 @@ const getCurrentQuestion = computed(() => {
 // }
 
 const NextQuestion = () => {
-    questions.value[currentQuestion.value].userAnswer = answer.value
-    answer.value = ''
-	if (currentQuestion.value < questions.value.length - 1) {
-		currentQuestion.value++
+	questions.value[questionIdx.value].userAnswer = answer.value
+	answer.value = ''
+	if (questionIdx.value < questions.value.length - 1) {
+		let axiosConfig = {
+			headers: {
+				'Content-Type': 'application/json;charset=UTF-8',
+				"Access-Control-Allow-Origin": "*",
+			}
+		};
+		axios.post(url.value + ":8888/play/answer", {
+			email: email.value,
+			question: questions.value[questionIdx.value],
+			answer: questions.value[questionIdx.value].userAnswer
+		}, axiosConfig)
+			.then(function (response) {
+				console.log(response);
+				questions.value[questionIdx.value].topAnswer = response.data;
+			})
+			.catch(function (error) {
+				console.log(error);
+			});
+		questionIdx.value++
 		return
 	}
-	
-	quizCompleted.value = true
+	quizCompleted.value = true;
 }
 </script>
-
-<template>
-	<main class="app">
-		<h1>The Quiz</h1>
-		
-		<section class="quiz" v-if="!quizCompleted">
-			<div class="quiz-info">
-				<span class="question">{{ currentQuestion + 1 }}. {{ getCurrentQuestion.question }}</span>
-				<span class="score">Score {{ score }}/{{ questions.length }}</span>
-			</div>
-			
-            <div class="input_answer">
-                <q-input 
-                    outlined 
-                    v-model="answer" 
-                     />
-            </div>
-
-			<!-- <div class="options">
-				<label 
-					v-for="(option, index) in getCurrentQuestion.options"
-                    :key="index"
-					:for="'option' + index" 
-					:class="`option ${
-						getCurrentQuestion.selected == index 
-							? index == getCurrentQuestion.answer 
-								? 'correct' 
-								: 'wrong'
-							: ''
-					} ${
-						getCurrentQuestion.selected != null &&
-						index != getCurrentQuestion.selected
-							? 'disabled'
-							: ''
-					}`">
-					<input 
-						type="radio" 
-						:id="'option' + index" 
-						:name="getCurrentQuestion.index" 
-						:value="index" 
-						v-model="getCurrentQuestion.selected" 
-						:disabled="getCurrentQuestion.selected"
-						@change="SetAnswer" 
-					/>
-					<span>{{ option }}</span>
-				</label>
-			</div> -->
-			
-			<button 
-				@click="NextQuestion" 
-				:disabled="!answer">
-				{{ 
-					getCurrentQuestion.index == questions.length - 1 
-						? 'Finish' 
-						: answer
-							? 'Submit'
-							: 'Next question'
-				}}
-			</button>
-		</section>
-
-		<section v-else>
-			<h2>You have finished the quiz!</h2>
-			<p>Your score is {{ score }}/{{ questions.length }}</p>
-		</section>
-	</main>
-</template>
 
 <style scoped>
 * {
@@ -147,10 +168,12 @@ const NextQuestion = () => {
 	box-sizing: border-box;
 	font-family: 'Montserrat', sans-serif;
 }
+
 body {
 	background-color: #271c36;
 	color: #FFF;
 }
+
 .app {
 	display: flex;
 	flex-direction: column;
@@ -158,35 +181,41 @@ body {
 	padding: 2rem;
 	height: 100vh;
 }
+
 h1 {
 	font-size: 2rem;
 	margin-bottom: 2rem;
 }
+
 .quiz {
 	/* background-color: #382a4b; */
 	padding: 1rem;
 	width: 100%;
 	max-width: 640px;
 }
+
 .quiz-info {
 	display: flex;
 	justify-content: space-between;
 	margin-bottom: 1rem;
 }
+
 .quiz-info .question {
 	/* color: #8F8F8F; */
 	font-size: 1.25rem;
 }
+
 .quiz-info .score {
 	/* color: #FFF; */
 	font-size: 1.25rem;
 }
+
 .options {
 	margin-bottom: 1rem;
 }
 
 .input_answer {
-    margin-bottom: 1rem;
+	margin-bottom: 1rem;
 }
 
 .option {
@@ -197,24 +226,31 @@ h1 {
 	border-radius: 0.5rem;
 	cursor: pointer;
 }
+
 .option:hover {
 	background-color: #2d213f;
 }
+
 .option.correct {
 	background-color: #2cce7d;
 }
+
 .option.wrong {
 	background-color: #ff5a5f;
 }
+
 .option:last-of-type {
 	margin-bottom: 0;
 }
+
 .option.disabled {
 	opacity: 0.5;
 }
+
 .option input {
 	display: none;
 }
+
 button {
 	appearance: none;
 	outline: none;
@@ -228,14 +264,17 @@ button {
 	font-size: 1.2rem;
 	border-radius: 0.5rem;
 }
+
 button:disabled {
 	opacity: 0.5;
 }
+
 h2 {
 	font-size: 2rem;
 	margin-bottom: 2rem;
 	text-align: center;
 }
+
 p {
 	color: #8F8F8F;
 	font-size: 1.5rem;

@@ -42,14 +42,14 @@
   </div>
 
 
-  <div v-if="(bAskingQuestions && examples)">
+  <div v-if="(bAskingQuestions && questions)">
     <div class="q-pa-md">
-      {{examples[exampleIndex]["A"]}} is to {{examples[exampleIndex]["B"]}} as {{examples[exampleIndex]["C"]}} is to _______.
+      {{questions[questionIdx]["question"]}}
     <div class="q-pa-md flex flex-center">
     <q-input style="max-width: 150px" v-model="answer" label="Your answer" />
     </div>
     <div class="q-pa-md q-gutter-sm">
-        <q-btn label="Submit" @click="submitAnswer()" color="primary" />
+        <!-- <q-btn label="Submit" @click="submitAnswer()" color="primary" /> -->
         <q-btn label="Next" @click="nextExample()" color="primary"/>
       </div>
   </div>
@@ -66,7 +66,7 @@ export default {
   setup() {
     const answer = ref(null)
 
-    const examples = ref(null)
+    const questions = ref(null)
 
     const formA = ref(null)
     const formB = ref(null)
@@ -81,14 +81,14 @@ export default {
         field: 'model',
         sortable: true
       },
-      { name: 'topB', align: 'center', label: 'topB', field: 'topD', sortable: true },
-      { name: 'topBScore', label: 'topBScore', field: 'topDScore', sortable: true },
-      { name: 'topBRank', label: 'topBRank', field: 'topDRank', sortable: true },
-      { name: 'topBSentence', label: 'topBSentence', field: 'topDSentence' },
-      { name: 'trueB', label: 'trueB', field: 'trueD' },
-      { name: 'trueBScore', label: 'trueBScore', field: 'trueDScore', sortable: true },
-      { name: 'trueBRank', label: 'trueBRank', field: 'trueDRank', sortable: true },
-      { name: 'trueBSentence', label: 'trueBSentence', field: 'trueDSentence' }
+      { name: 'top', align: 'center', label: 'top', field: 'top', sortable: true },
+      { name: 'topScore', label: 'topScore', field: 'topScore', sortable: true },
+      { name: 'topRank', label: 'topRank', field: 'topRank', sortable: true },
+      { name: 'topSentence', label: 'topSentence', field: 'topSentence' },
+      { name: 'answer', label: 'answer', field: 'answer' },
+      { name: 'answerScore', label: 'answerScore', field: 'answerScore', sortable: true },
+      { name: 'answerRank', label: 'answerRank', field: 'answerRank', sortable: true },
+      { name: 'answerSentence', label: 'answerSentence', field: 'answerSentence' }
     ]
     const columnsD = [
       {
@@ -99,14 +99,14 @@ export default {
         field: 'model',
         sortable: true
       },
-      { name: 'topD', align: 'center', label: 'topD', field: 'topD', sortable: true },
-      { name: 'topDScore', label: 'topDScore', field: 'topDScore', sortable: true },
-      { name: 'topDRank', label: 'topDRank', field: 'topDRank', sortable: true },
-      { name: 'topDSentence', label: 'topDSentence', field: 'topDSentence' },
-      { name: 'trueD', label: 'trueD', field: 'trueD' },
-      { name: 'trueDScore', label: 'trueDScore', field: 'trueDScore', sortable: true },
-      { name: 'trueDRank', label: 'trueDRank', field: 'trueDRank', sortable: true },
-      { name: 'trueDSentence', label: 'trueDSentence', field: 'trueDSentence' }
+      { name: 'top', align: 'center', label: 'top', field: 'top', sortable: true },
+      { name: 'topScore', label: 'topScore', field: 'topScore', sortable: true },
+      { name: 'topRank', label: 'topRank', field: 'topRank', sortable: true },
+      { name: 'topSentence', label: 'topSentence', field: 'topSentence' },
+      { name: 'answer', label: 'answer', field: 'answer' },
+      { name: 'answerScore', label: 'answerScore', field: 'answerScore', sortable: true },
+      { name: 'answerRank', label: 'answerRank', field: 'answerRank', sortable: true },
+      { name: 'answerSentence', label: 'answerSentence', field: 'answerSentence' }
     ]
     const rowsB = ref(null)
     const rowsD = ref(null)
@@ -124,21 +124,25 @@ export default {
       }
     })
 
-    const exampleIndex = ref(0)
+    const questionIdx = ref(0)
+    // const url = ref('http://10.26.27.216')
+    // const url = ref('http://10.25.226.91')
+    const url = ref('http://192.168.1.23')
+    // const url = ref('http://127.0.0.1')
 
-    function queryExamples() {
+    function queryQuestions() {
         let axiosConfig = {
           headers: {
             'Content-Type': 'application/json;charset=UTF-8',
-            "Access-Control-Allow-Origin": "http://localhost:8080",
+            "Access-Control-Allow-Origin":  "*",
           }
         };
-        axios.post("http://127.0.0.1:8888/examples", {
+        axios.post(url.value + ":8888/table/questions", {
           num: 10
         }, axiosConfig)
           .then(function (response) {
             console.log(response);
-            examples.value = response.data
+            questions.value = response.data
           })
           .catch(function (error) {
             console.log(error);
@@ -146,7 +150,7 @@ export default {
       }
 
     onMounted(()=>{
-      queryExamples()
+      queryQuestions()
     })
 
     return {
@@ -162,9 +166,9 @@ export default {
       email,
       bIsLoading,
       bAskingQuestions,
-      examples,
-      exampleIndex,
-      queryExamples,
+      questions,
+      questionIdx,
+      queryQuestions,
       answer,
 
       onSubmit() {
@@ -182,7 +186,7 @@ export default {
             "Access-Control-Allow-Origin": "*",
           }
         };
-        axios.post("http://127.0.0.1:8888/search2", {
+        axios.post(url.value + ":8888/table/queryOnlineResult", {
           email: email.value,
           formA: formA.value,
           formB: formB.value,
@@ -215,13 +219,12 @@ export default {
         let axiosConfig = {
           headers: {
             'Content-Type': 'application/json;charset=UTF-8',
-            "Access-Control-Allow-Origin": "http://localhost:8080",
+            "Access-Control-Allow-Origin":  "*",
           }
         };
-      axios.post("http://127.0.0.1:8888/answer", {
-          formA: examples.value[exampleIndex.value]["A"],
-          formB: examples.value[exampleIndex.value]["B"],
-          formC: examples.value[exampleIndex.value]["C"],
+        axios.post(url.value + ":8888/table/answer", {
+          email: email.value,
+          question: questions.value[questionIdx.value],
           answer: answer.value
         }, axiosConfig)
           .then(function (response) {
@@ -233,9 +236,10 @@ export default {
       },
 
       nextExample() {
-        if (exampleIndex.value < examples.value.size)
+        this.submitAnswer()
+        if (questionIdx.value < questions.value.length)
         {
-          exampleIndex.value += 1;
+          questionIdx.value += 1;
           answer.value = null
         } else 
         {
