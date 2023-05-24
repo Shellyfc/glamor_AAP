@@ -45,7 +45,12 @@ def printConfig():
     print(f"Is MPS available? {torch.backends.mps.is_available()}")
 
     # Set the device
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     print(f"Using device: {device}")
 
 
@@ -213,10 +218,10 @@ def queryOnlineResult():
 @cross_origin()
 def questions():
     num = request.get_json(silent=True).get("num")
-    questionsB = queryDataB(num / 2)
-    questionsB = sample(questionsB, min(num / 2, len(questionsB)))
-    questionsD = queryDataD(num - num / 2)
-    questionsD = sample(questionsD, min(num / 2, len(questionsD)))
+    questionsB = queryDataB(num // 2)
+
+    questionsD = queryDataD(num - num // 2)
+    questionsD = sample(questionsD, min(num // 2, len(questionsD)))
     ret = []
     sentence = "{A} is to {B} as {C} is to {D}."
     for q in questionsB:
