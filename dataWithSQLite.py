@@ -189,7 +189,7 @@ def queryOnlineResult():
                                       top_answer_both['topScore'], top_answer_both['topSentence'])
                 aid = user_answer(email, None, did, top_answer_both['answer'], top_answer_both['answerSentence'])
                 insertAnswerOnlineResult(aid, model, top_answer_both['answer'], top_answer_both['answerRank'],
-                                             top_answer_both['answerScore'])
+                                         top_answer_both['answerScore'])
             else:
                 result['D'].append({'model': model, 'top': topD[4], 'topScore': topD[6], 'topRank': topD[5],
                                     'topSentence': topD[7],
@@ -304,8 +304,6 @@ def answer():
         aid = user_answer(email, None, did, answer, sentence.format(A=A, B=B, C=C, D='*' + answer))
         topAnswers = queryTopVotedAnswersWithid(None, did, 5)
     return topAnswers
-
-
 
 
 if __name__ == '__main__':

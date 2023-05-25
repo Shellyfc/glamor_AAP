@@ -3,50 +3,31 @@
 		<h1>The Quiz</h1>
 
 		<section class="quiz" v-if="!quizCompleted">
-			<div class="quiz-info">
-				<span class="question">{{ questionIdx + 1 }}. {{ getCurrentQuestion.question }}</span>
-				<span class="score">Score {{ score }}/{{ questions.length }}</span>
+			<div v-if="getCurrentQuestion && questions">
+				<div class="quiz-info">
+					<span class="question">{{ questionIdx + 1 }}. {{ getCurrentQuestion.question }}</span>
+					<span class="score">Score {{ score }}/{{ questions.length }}</span>
+				</div>
+
+				<div class="input_answer">
+					<q-input outlined v-model="answer" />
+				</div>
+				<button @click="NextQuestion" :disabled="!answer">
+					{{
+						getCurrentQuestion.index == questions.length - 1
+						? 'Finish'
+						: answer
+							? 'Submit'
+							: 'Next question'
+					}}
+				</button>
 			</div>
 
-			<div class="input_answer">
-				<q-input outlined v-model="answer" />
-			</div>
-			<button @click="NextQuestion" :disabled="!answer">
-				{{
-					getCurrentQuestion.index == questions.length - 1
-					? 'Finish'
-					: answer
-						? 'Submit'
-						: 'Next question'
-				}}
-			</button>
 		</section>
 
 		<section v-else>
 			<h2>You have finished the quiz!</h2>
 			<p>Your score is {{ score }}/{{ questions.length }}</p>
-			<!-- <li v-for="(question, index) in questions" :key="index">
-				Question: {{ question.question }}
-				Your Answer: {{ question.userAnswer }}
-				Others' Answers: {{ question.topAnswer }}
-			</li> -->
-			<!-- <div class="q-pa-md">
-				<q-carousel v-model="questionIdx" transition-prev="slide-right" transition-next="slide-left" animated
-					control-color="teal" class="rounded-borders">
-					<q-carousel-slide v-for="(question, index) in questions" :key="index" name="index"
-						class="column no-wrap flex-center">
-						<div class="q-mt-md text-center">
-							Question: {{ question.question }}
-							Your Answer: {{ question.userAnswer }}
-							Others' Answers: {{ question.topAnswer }}
-						</div>
-					</q-carousel-slide>
-				</q-carousel>
-
-				<div class="row justify-center">
-					<q-btn-toggle glossy v-model="questionIdx" :options="options" />
-				</div>
-			</div> -->
 			<div>
 				Question: {{ questions[page - 1].question }}
 				Your Answer: {{ questions[page - 1].userAnswer }}
@@ -68,10 +49,10 @@ import axios from 'axios'
 import { getAuth } from "firebase/auth";
 // import { get } from 'http';
 const answer = ref('')
-const url = ref('http://192.168.1.23')
+// const url = ref('http://192.168.1.23')
 // const url = ref('http://10.26.27.216')
 // const url = ref('http://10.25.226.91')
-// const url = ref('http://127.0.0.1')
+const url = ref('http://127.0.0.1')
 const questions = ref(null)
 const quizCompleted = ref(false)
 const questionIdx = ref(0)
@@ -86,12 +67,15 @@ getAuth().onAuthStateChanged(function (user) {
 })
 const score = computed(() => {
 	let value = 0
-	questions.value.map(q => {
-		if (q.userAnswer != null && q.answer == q.userAnswer) {
-			// console.log('correct');
-			value++
-		}
-	})
+	if (questions.value) {
+		questions.value.map(q => {
+			if (q.userAnswer != null && q.answer == q.userAnswer) {
+				// console.log('correct');
+				value++
+			}
+		})
+	}
+
 	return value
 })
 
@@ -119,10 +103,13 @@ onBeforeMount(() => {
 })
 
 const getCurrentQuestion = computed(() => {
-	let question = questions.value[questionIdx.value]
-	console.log(questions.value)
-	question.index = questionIdx.value
-	return question
+	if (questions.value) {
+		let question = questions.value[questionIdx.value]
+		console.log(questions.value)
+		question.index = questionIdx.value
+		return question
+	}
+	return false
 })
 // const SetAnswer = (e) => {
 // 	questions.value[currentQuestion.value].userAnswer = e

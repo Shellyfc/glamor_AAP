@@ -1,6 +1,6 @@
 import sqlite3
 
-DATABASE = '/Users/glamor-sypha/Documents/Glamor/glamor.sqlite'
+DATABASE = '/Users/chufang/github/glamor_demo/glamor.sqlite'
 
 
 def insertDataB(A, C, D) -> int:

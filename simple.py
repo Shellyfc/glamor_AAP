@@ -11,7 +11,7 @@ from transformers import logging
 import json
 from datetime import datetime
 from random import sample, choices
-from deprecated import deprecated
+# from deprecated import deprecated
 from filelock import Timeout, FileLock
 
 logging.set_verbosity_error()

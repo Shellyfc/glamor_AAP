@@ -25,13 +25,7 @@
   </div>
 
   <div class="q-pa-md flex flex-center" v-if="bIsLoading">
-    <q-circular-progress
-      indeterminate
-      rounded
-      size="50px"
-      color="light-blue"
-      class="q-ma-md"
-    />
+    <q-circular-progress indeterminate rounded size="50px" color="light-blue" class="q-ma-md" />
   </div>
 
   <div class="q-pa-md" v-if="rowsB">
@@ -44,15 +38,15 @@
 
   <div v-if="(bAskingQuestions && questions)">
     <div class="q-pa-md">
-      {{questions[questionIdx]["question"]}}
-    <div class="q-pa-md flex flex-center">
-    <q-input style="max-width: 150px" v-model="answer" label="Your answer" />
-    </div>
-    <div class="q-pa-md q-gutter-sm">
-        <!-- <q-btn label="Submit" @click="submitAnswer()" color="primary" /> -->
-        <q-btn label="Next" @click="nextExample()" color="primary"/>
+      {{ questions[questionIdx]["question"] }}
+      <div class="q-pa-md flex flex-center">
+        <q-input style="max-width: 150px" v-model="answer" label="Your answer" />
       </div>
-  </div>
+      <div class="q-pa-md q-gutter-sm">
+        <!-- <q-btn label="Submit" @click="submitAnswer()" color="primary" /> -->
+        <q-btn label="Next" @click="nextExample()" color="primary" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -113,7 +107,7 @@ export default {
     const bIsLoading = ref(false)
     const bAskingQuestions = ref(true)
 
-    const $q = useQuasar()
+    const qq = useQuasar()
 
     const email = ref(null)
     getAuth().onAuthStateChanged(function (user) {
@@ -127,29 +121,29 @@ export default {
     const questionIdx = ref(0)
     // const url = ref('http://10.26.27.216')
     // const url = ref('http://10.25.226.91')
-    const url = ref('http://192.168.1.23')
-    // const url = ref('http://127.0.0.1')
+    // const url = ref('http://192.168.1.23')
+    const url = ref('http://127.0.0.1')
 
     function queryQuestions() {
-        let axiosConfig = {
-          headers: {
-            'Content-Type': 'application/json;charset=UTF-8',
-            "Access-Control-Allow-Origin":  "*",
-          }
-        };
-        axios.post(url.value + ":8888/table/questions", {
-          num: 10
-        }, axiosConfig)
-          .then(function (response) {
-            console.log(response);
-            questions.value = response.data
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
-      }
+      let axiosConfig = {
+        headers: {
+          'Content-Type': 'application/json;charset=UTF-8',
+          "Access-Control-Allow-Origin": "*",
+        }
+      };
+      axios.post(url.value + ":8888/table/questions", {
+        num: 10
+      }, axiosConfig)
+        .then(function (response) {
+          console.log(response);
+          questions.value = response.data
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    }
 
-    onMounted(()=>{
+    onMounted(() => {
       queryQuestions()
     })
 
@@ -162,7 +156,7 @@ export default {
       rowsB,
       columnsD,
       rowsD,
-      $q,
+      qq,
       email,
       bIsLoading,
       bAskingQuestions,
@@ -172,7 +166,7 @@ export default {
       answer,
 
       onSubmit() {
-        // $q.loading.show({
+        // qq.loading.show({
         //   spinner: QSpinnerInfinity,
         //   message: 'Fetching data. Hang on...',
         // });
@@ -194,7 +188,7 @@ export default {
           formD: formD.value,
         }, axiosConfig)
           .then(function (response) {
-            // $q.loading.hide()
+            // qq.loading.hide()
             bIsLoading.value = false
             console.log(response);
             rowsB.value = response.data["B"]
@@ -202,7 +196,7 @@ export default {
           })
           .catch(function (error) {
             console.log(error);
-            $q.loading.hide()
+            qq.loading.hide()
           });
       },
 
@@ -219,7 +213,7 @@ export default {
         let axiosConfig = {
           headers: {
             'Content-Type': 'application/json;charset=UTF-8',
-            "Access-Control-Allow-Origin":  "*",
+            "Access-Control-Allow-Origin": "*",
           }
         };
         axios.post(url.value + ":8888/table/answer", {
@@ -237,12 +231,10 @@ export default {
 
       nextExample() {
         this.submitAnswer()
-        if (questionIdx.value < questions.value.length)
-        {
+        if (questionIdx.value < questions.value.length) {
           questionIdx.value += 1;
           answer.value = null
-        } else 
-        {
+        } else {
           this.queryExamples();
         }
       }
