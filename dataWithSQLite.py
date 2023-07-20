@@ -37,7 +37,7 @@ CORS(app)
 # # Connecting to the SQLite
 # conn = sqlite3.connect('glamor.db')
 # print("Opened database successfully")
-DATABASE = '/Users/glamor-sypha/Documents/Glamor/glamor.sqlite'
+DATABASE = './glamor.sqlite'
 
 
 def printConfig():
