@@ -2,7 +2,7 @@
   <div class="home">
     <!-- <img alt="Vue logo" src="../assets/logo.png">
     <HelloWorld msg="Welcome to Your Vue.js App" /> -->
-    <a href="https://glamor-usc.github.io/">GLAMOR@USC</a>
+    <q-btn href="https://glamor-usc.github.io/" label="GLAMOR@USC" flat color="secondary" />
   </div>
 </template>
 

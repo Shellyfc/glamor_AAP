@@ -1,87 +1,119 @@
 <template>
   <div class="container">
-    <form @submit.prevent="login">
-      <h2 class="mb-3">Login</h2>
-      <div class="input">
-        <label for="email">Email address</label>
-        <input
-          class="form-control"
-          type="text"
-          name="email"
-          placeholder="email@adress.com"
-        />
-      </div>
-      <div class="input">
-        <label for="password">Password</label>
-        <input
-          class="form-control"
-          type="password"
-          name="password"
-          placeholder="password123"
-        />
-      </div>
+    <div class="q-pa-md" style="max-width: 40%; margin: auto">
+      <q-form color="secondary" @submit="submit" class="q-gutter-md">
+        <q-input type="email" color="secondary" filled v-model="email" label="Your email *" hint="Email Address"
+          lazy-rules :rules="[val => val && val.length > 0 || 'Please type your email']">
+          <template v-slot:prepend>
+            <q-icon name="email" />
+          </template>
+        </q-input>
+
+        <q-input color="secondary" clearable :type="passwordFieldType" filled v-model="password" label="Your password *"
+          hint="Password" lazy-rules :rules="[val => val && val.length > 0 || 'Please type your password']">
+          <template v-slot:prepend>
+            <q-icon name="lock" />
+          </template>
+          <template v-slot:append>
+            <q-icon :name="visibilityIcon" @click="switchVisibility" class="cursor-pointer" />
+          </template>
+        </q-input>
+
+        <!-- <q-toggle v-model=" accept" label="I accept the license and terms" /> -->
+
+        <div>
+          <q-btn color="secondary" label="Submit" type="submit" />
+        </div>
+      </q-form>
+      <br>
+      <q-btn @click="signInWithGoogle">
+        <img src="../assets/google-outline.svg" style="height: 10%; width: 10%;">
+      </q-btn>
+      <br>
       <div class="alternative-option mt-4">
         You don't have an account?
-        <button @click="moveToRegister">
-          Register
-      </button>
+        <q-btn flat color="secondary" label="Register" @click="moveToRegister" />
       </div>
-      <button type="submit" class="mt-4 btn-pers" id="login_button">
-        Login
-      </button>
-    </form>
+
+    </div>
   </div>
 </template>
 
 <script>
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Notify } from 'quasar';
-import { ref } from 'vue' // used for conditional rendering
+import { useUsersStore } from "../../src/store/user";
+// import { storeToRefs } from 'pinia'
 
 export default {
+  setup() {
+    const userStore = useUsersStore()
+    return {
+      userStore,
+    }
+  }
+  ,
   data() {
     return {
       email: "",
       password: "",
-      errorCode: ""
+      errorCode: "",
+      visibility: false,
+      passwordFieldType: 'password',
+      visibilityIcon: 'visibility'
     };
   },
   methods: {
-    login(submitEvent) {
-      this.email = submitEvent.target.elements.email.value;
-      this.password = submitEvent.target.elements.password.value;
-
+    submit() {
       const auth = getAuth();
       signInWithEmailAndPassword(auth, this.email, this.password)
         .then(() => {
-          this.$router.push("/tableView");
+          this.userStore.login(this.email);
+          this.$router.push("home");
+          Notify.create(
+            {
+              type: "positive",
+              message: "Logging in...",
+              timeout: 1000
+            })
         })
         .catch((error) => {
-          this.errorCode = error.code;
-          const errMsg = ref(null)
-          switch (error.code) {
-          case 'auth/invalid-email':
-              errMsg.value = 'Invalid email'
-              break
-          case 'auth/user-not-found':
-              errMsg.value = 'No account with that email was found'
-              break
-          case 'auth/wrong-password':
-              errMsg.value = 'Incorrect password'
-              break
-          default:
-              errMsg.value = 'Email or password was incorrect'
-              break
-        }
-          // const errorMessage = error.message;
-          // console.log(errorCode);
-          // console.log(errorMessage);
-          // let alert_1 = document.querySelector("#alert_1");
-          // alert_1.classList.remove("d-none");
-          // alert_1.innerHTML = errorMessage;
-          // console.log(alert_1);
-          Notify.create(errMsg.value)
+          Notify.create(
+            {
+              type: "negative",
+              message: error.message
+            })
         });
+    },
+    signInWithGoogle() {
+      const auth = getAuth();
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          // This gives you a Google Access Token. You can use it to access the Google API.
+          // const credential = GoogleAuthProvider.credentialFromResult(result);
+          // const token = credential.accessToken;
+          // The signed-in user info.
+          const user = result.user;
+          // IdP data available using getAdditionalUserInfo(result)
+          console.log(user)
+          // ...
+        }).catch((error) => {
+          // Handle Errors here.
+          // const errorCode = error.code;
+          // const errorMessage = error.message;
+          // // The email of the user's account used.
+          // const email = error.customData.email;
+          // // The AuthCredential type that was used.
+          // const credential = GoogleAuthProvider.credentialFromError(error);
+          // ...
+          console.log(error)
+        });
+    },
+    switchVisibility() {
+      this.visibility = !this.visibility
+      this.passwordFieldType = this.visibility ? 'text' : 'password'
+      this.visibilityIcon = this.visibility ? 'visibility_off' : 'visibility'
     },
     moveToRegister() {
       this.$router.push("/register");

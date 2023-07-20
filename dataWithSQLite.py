@@ -15,10 +15,11 @@ from datetime import datetime
 from random import sample, choices
 import sqlite3
 import dao
+import sys
 
 logging.set_verbosity_error()
 
-DATASET_PATH = '~/Downloads/GoogleNews-vectors-negative300.bin'
+DATASET_PATH = './GoogleNews-vectors-negative300.bin'
 
 # Initializing a BERT bert-base-uncased style configuration
 configuration = BertConfig()
@@ -29,7 +30,9 @@ model = BertModel(configuration)
 # Accessing the model configuration
 configuration = model.config
 app = Flask(__name__)
+app.config['CORS_HEADERS'] = 'Content-Type'
 CORS(app)
+# logging.getLogger('flask_cors').level = logging.DEBUG
 
 # # Connecting to the SQLite
 # conn = sqlite3.connect('glamor.db')
@@ -119,7 +122,7 @@ def searchOnline(bid, did, model, formA, formB, formC, formD):
 
 
 @app.post('/table/queryOnlineResult')
-@cross_origin()
+# @cross_origin()
 def queryOnlineResult():
     """
 
@@ -215,7 +218,7 @@ def queryOnlineResult():
 
 @app.post('/table/questions')
 @app.post('/play/questions')
-@cross_origin()
+# @cross_origin()
 def questions():
     num = request.get_json(silent=True).get("num")
     questionsB = queryDataB(num // 2)
@@ -273,7 +276,7 @@ def user_answer(email, bid, did, answer, sentence) -> int:
 
 @app.post('/table/answer')
 @app.post('/play/answer')
-@cross_origin()
+# @cross_origin()
 def answer():
     """
     update user_answer & recalculate vote and then update vote in answer_online_result
@@ -308,4 +311,7 @@ def answer():
 
 if __name__ == '__main__':
     printConfig()
-    app.run(host='0.0.0.0', port=8888)
+    port = 8888
+    if sys.argv[1]:
+        port = int(sys.argv[1])
+    app.run(ssl_context='adhoc', host='0.0.0.0', port=port, debug=True)

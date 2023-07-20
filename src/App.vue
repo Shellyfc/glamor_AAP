@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <router-link to="/">Home</router-link> |
+    <router-link to="/home">Home</router-link> |
     <router-link to="/about">About</router-link> |
     <router-link to="/tableView">Search</router-link> |
     <router-link to="/play">Play</router-link>
@@ -47,13 +47,28 @@ nav {
 import { ref } from 'vue' // used for conditional rendering
 // import firebase from 'firebase'
 import { getAuth } from "firebase/auth";
+import { useUsersStore } from "../src/store/user";
+import { useRouter } from 'vue-router'
+import { Notify } from 'quasar';
+
 const isLoggedIn = ref(true)
 const email = ref(null)
+const userStore = useUsersStore()
+const router = useRouter()
 // runs after firebase is initialized
 getAuth().onAuthStateChanged(function (user) {
   if (user) {
     isLoggedIn.value = true // if we have a user
     email.value = user.email
+    userStore.login(user.email)
+    Notify.create(
+      {
+        type: "positive",
+        message: "Loged in",
+        timeout: 1000
+      }
+    )
+    router.push("/dashboard");
   } else {
     isLoggedIn.value = false // if we do not
   }

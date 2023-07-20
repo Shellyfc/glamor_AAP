@@ -16,7 +16,7 @@ from filelock import Timeout, FileLock
 
 logging.set_verbosity_error()
 
-DATASET_PATH = '~/Downloads/GoogleNews-vectors-negative300.bin'
+DATASET_PATH = './GoogleNews-vectors-negative300.bin'
 
 # Initializing a BERT bert-base-uncased style configuration
 configuration = BertConfig()

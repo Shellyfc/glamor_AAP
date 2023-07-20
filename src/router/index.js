@@ -5,7 +5,7 @@ import PlayView from "../views/PlayView.vue";
 
 const routes = [
   {
-    path: '/',
+    path: '/home',
     name: 'home',
     component: () =>
       import(/* webpackChunkName: "about" */ "../views/HomeView.vue"),

@@ -7,6 +7,8 @@ import router from './router'
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { createPinia } from "pinia";
+import { useUsersStore } from "./store/user"
 // import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -29,16 +31,45 @@ const app = initializeApp(firebaseConfig);
 export default app;
 export const auth = getAuth(app);
 
-createApp(App).use(router).use(Quasar, {
+// pinia init
+const pinia = createPinia();
+
+// preceptor
+router.beforeEach((to, from, next) => {
+  const userStore = useUsersStore()
+  let logined = userStore.logined
+  if (to.name == "register") {
+    next()
+  }
+  else if(to.name=="login"){
+    if(!logined){
+      next();
+    }else{
+      router.replace("/home");
+    }
+  }else{
+    if (!logined) {
+      Notify.create(
+            {
+              type: "warning",
+              message: "You have to log in",
+              timeout: 2000
+            })
+      router.replace({path:"login", query:{redirect:to.name}});
+    }else{
+      next();
+    }
+  }
+}),
+
+createApp(App).use(pinia).use(router).use(Quasar, {
   plugins: {
     Loading,
     Notify
   },
   config: {
     loading: { /* look at QuasarConfOptions from the API card */ },
-    notify: { /* look at QuasarConfOptions from the API card */ }
+    notify: { /* look at QuasarConfOptions from the API card */ },
+    brand: "secondary"
   }
 }).use(Quasar, quasarUserOptions).mount('#app')
-
-
-

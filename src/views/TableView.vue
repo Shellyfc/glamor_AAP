@@ -16,17 +16,17 @@
           :rules="[val => val && val.length > 0 || 'Please type something']" />
       </div>
       <div>
-        <q-btn label="Submit" type="submit" color="primary" />
-        <q-btn label="Reset" type="reset" color="primary" flat class="q-ml-sm" />
+        <q-btn label="Submit" :loading="loading" type="submit" color="secondary" />
+        <q-btn label="Reset" type="reset" color="secondary" flat class="q-ml-sm" />
       </div>
 
     </q-form>
 
   </div>
 
-  <div class="q-pa-md flex flex-center" v-if="bIsLoading">
+  <!-- <div class="q-pa-md flex flex-center" v-if="bIsLoading">
     <q-circular-progress indeterminate rounded size="50px" color="light-blue" class="q-ma-md" />
-  </div>
+  </div> -->
 
   <div class="q-pa-md" v-if="rowsB">
     <q-table title="Model Predictions for B" :rows="rowsB" :columns="columnsB" row-key="name" />
@@ -40,11 +40,10 @@
     <div class="q-pa-md">
       {{ questions[questionIdx]["question"] }}
       <div class="q-pa-md flex flex-center">
-        <q-input style="max-width: 150px" v-model="answer" label="Your answer" />
+        <q-input style="max-width: 150px" v-model="answer" label="Your answer" color="secondary" />
       </div>
       <div class="q-pa-md q-gutter-sm">
-        <!-- <q-btn label="Submit" @click="submitAnswer()" color="primary" /> -->
-        <q-btn label="Next" @click="nextExample()" color="primary" />
+        <q-btn label="Next" @click="nextExample()" :disabled="!answer" color="secondary" />
       </div>
     </div>
   </div>
@@ -55,9 +54,11 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useQuasar } from 'quasar'
 import { getAuth } from "firebase/auth";
+import { Notify } from 'quasar';
 
 export default {
   setup() {
+    const loading = ref(false)
     const answer = ref(null)
 
     const questions = ref(null)
@@ -122,7 +123,7 @@ export default {
     // const url = ref('http://10.26.27.216')
     // const url = ref('http://10.25.226.91')
     // const url = ref('http://192.168.1.23')
-    const url = ref('http://127.0.0.1')
+    const url = ref('https://127.0.0.1')
 
     function queryQuestions() {
       let axiosConfig = {
@@ -148,6 +149,7 @@ export default {
     })
 
     return {
+      loading,
       formA,
       formB,
       formC,
@@ -170,6 +172,7 @@ export default {
         //   spinner: QSpinnerInfinity,
         //   message: 'Fetching data. Hang on...',
         // });
+        loading.value = true;
         rowsB.value = null;
         rowsD.value = null;
         bIsLoading.value = true;
@@ -193,10 +196,19 @@ export default {
             console.log(response);
             rowsB.value = response.data["B"]
             rowsD.value = response.data["D"]
+            loading.value = false;
           })
           .catch(function (error) {
             console.log(error);
+            Notify.create(
+              {
+                type: "negative",
+                message: error.message,
+                timeout: 2000
+              }
+            )
             qq.loading.hide()
+            loading.value = false;
           });
       },
 
