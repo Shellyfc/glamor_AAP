@@ -314,4 +314,4 @@ if __name__ == '__main__':
     port = 8888
     if sys.argv[1]:
         port = int(sys.argv[1])
-    app.run(ssl_context='adhoc', host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)

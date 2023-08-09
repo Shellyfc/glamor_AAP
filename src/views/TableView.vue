@@ -123,7 +123,7 @@ export default {
     // const url = ref('http://10.26.27.216')
     // const url = ref('http://10.25.226.91')
     // const url = ref('http://192.168.1.23')
-    const url = ref('https://127.0.0.1')
+    const url = ref('http://127.0.0.1')
 
     function queryQuestions() {
       let axiosConfig = {
