@@ -16,6 +16,8 @@ from random import sample, choices
 import sqlite3
 import dao
 import sys
+import gdown
+from sh import gunzip
 
 logging.set_verbosity_error()
 
@@ -310,6 +312,16 @@ def answer():
 
 
 if __name__ == '__main__':
+    # check for GoogleNews-vectors-negative300.bin.gz
+    PATH = './GoogleNews-vectors-negative300.bin'
+    if os.path.isfile(PATH) and os.access(PATH, os.R_OK):
+        print("File exists and is readable")
+    else:
+        print("Downloading GoogleNews-vectors-negative300.bin.gz")
+        id = '0B7XkCwpI5KDYNlNUTTlSS21pQmM'
+        gdown.download(id=id, output='GoogleNews-vectors-negative300.bin.gz', quiet=False)
+        gunzip('./GoogleNews-vectors-negative300.bin.gz')
+    if os.path.isfile('./GoogleNews-vectors-negative300.bin.gz'): os.remove('./GoogleNews-vectors-negative300.bin.gz')
     printConfig()
     port = 8888
     if sys.argv[1]:
