@@ -1,24 +1,10 @@
-# myproject
+replace <port_number> with actual front end port number:
 
-## Project setup
-```
-npm install
-```
+`sh run.sh <port_number>`
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+The above command runs the backend at port 8888 and runs the frontend at the specified port
 
-### Compiles and minifies for production
-```
-npm run build
-```
 
-### Lints and fixes files
-```
-npm run lint
-```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+
+

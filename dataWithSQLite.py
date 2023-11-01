@@ -15,10 +15,13 @@ from datetime import datetime
 from random import sample, choices
 import sqlite3
 import dao
+import sys
+import gdown
+from sh import gunzip
 
 logging.set_verbosity_error()
 
-DATASET_PATH = '~/Downloads/GoogleNews-vectors-negative300.bin'
+DATASET_PATH = './GoogleNews-vectors-negative300.bin'
 
 # Initializing a BERT bert-base-uncased style configuration
 configuration = BertConfig()
@@ -29,12 +32,14 @@ model = BertModel(configuration)
 # Accessing the model configuration
 configuration = model.config
 app = Flask(__name__)
+app.config['CORS_HEADERS'] = 'Content-Type'
 CORS(app)
+# logging.getLogger('flask_cors').level = logging.DEBUG
 
 # # Connecting to the SQLite
 # conn = sqlite3.connect('glamor.db')
 # print("Opened database successfully")
-DATABASE = '/Users/glamor-sypha/Documents/Glamor/glamor.sqlite'
+DATABASE = './glamor.sqlite'
 
 
 def printConfig():
@@ -119,7 +124,7 @@ def searchOnline(bid, did, model, formA, formB, formC, formD):
 
 
 @app.post('/table/queryOnlineResult')
-@cross_origin()
+# @cross_origin()
 def queryOnlineResult():
     """
 
@@ -215,7 +220,7 @@ def queryOnlineResult():
 
 @app.post('/table/questions')
 @app.post('/play/questions')
-@cross_origin()
+# @cross_origin()
 def questions():
     num = request.get_json(silent=True).get("num")
     questionsB = queryDataB(num // 2)
@@ -273,7 +278,7 @@ def user_answer(email, bid, did, answer, sentence) -> int:
 
 @app.post('/table/answer')
 @app.post('/play/answer')
-@cross_origin()
+# @cross_origin()
 def answer():
     """
     update user_answer & recalculate vote and then update vote in answer_online_result
@@ -307,5 +312,18 @@ def answer():
 
 
 if __name__ == '__main__':
+    # check for GoogleNews-vectors-negative300.bin.gz
+    PATH = './GoogleNews-vectors-negative300.bin'
+    if os.path.isfile(PATH) and os.access(PATH, os.R_OK):
+        print("File exists and is readable")
+    else:
+        print("Downloading GoogleNews-vectors-negative300.bin.gz")
+        id = '0B7XkCwpI5KDYNlNUTTlSS21pQmM'
+        gdown.download(id=id, output='GoogleNews-vectors-negative300.bin.gz', quiet=False)
+        gunzip('./GoogleNews-vectors-negative300.bin.gz')
+    if os.path.isfile('./GoogleNews-vectors-negative300.bin.gz'): os.remove('./GoogleNews-vectors-negative300.bin.gz')
     printConfig()
-    app.run(host='0.0.0.0', port=8888)
+    port = 8888
+    if sys.argv[1]:
+        port = int(sys.argv[1])
+    app.run(host='0.0.0.0', port=port, debug=True)

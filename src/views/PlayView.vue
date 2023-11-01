@@ -12,7 +12,7 @@
 				<div class="input_answer">
 					<q-input outlined v-model="answer" />
 				</div>
-				<button @click="NextQuestion" :disabled="!answer">
+				<button color="secondary" @click="NextQuestion" :disabled="!answer">
 					{{
 						getCurrentQuestion.index == questions.length - 1
 						? 'Finish'
@@ -36,8 +36,8 @@
 				</li>
 			</div>
 			<div class="q-pa-lg flex flex-center">
-				<q-pagination v-model="page" :max="questions.length" direction-links push color="teal" active-design="push"
-					active-color="orange" />
+				<q-pagination v-model="page" :max="questions.length" direction-links push color="secondary"
+					active-design="push" active-color="orange" />
 			</div>
 		</section>
 	</main>
@@ -244,8 +244,8 @@ button {
 	border: none;
 	cursor: pointer;
 	padding: 0.5rem 1rem;
-	background-color: #2cce7d;
-	color: #2d213f;
+	background-color: #52a49a;
+	color: #ffffff;
 	font-weight: 700;
 	text-transform: uppercase;
 	font-size: 1.2rem;
