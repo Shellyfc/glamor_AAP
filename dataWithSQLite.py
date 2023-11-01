@@ -224,7 +224,7 @@ def queryOnlineResult():
 def questions():
     num = request.get_json(silent=True).get("num")
     questionsB = queryDataB(num // 2)
-
+    questionsB = sample(questionsB, min(num // 2, len(questionsB)))
     questionsD = queryDataD(num - num // 2)
     questionsD = sample(questionsD, min(num // 2, len(questionsD)))
     ret = []
