@@ -17,7 +17,7 @@ def insertDataB(A, C, D) -> int:
             cur.execute("INSERT INTO data_b (A, C, D) VALUES(?, ?, ?)", (A, C, D))
             con.commit()
             msg = "Record successfully added"
-            print(cur.lastrowid)
+            # print(cur.lastrowid)
             return cur.lastrowid
     except sqlite3.Error as err:
         print('Sql error: %s' % (' '.join(err.args)))
